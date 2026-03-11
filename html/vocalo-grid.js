@@ -2,7 +2,6 @@ const htmlEl = document.documentElement;
 
 const Caches = {};
 const get = async (url) => {
-
     if (Caches[url]) return Caches[url];
     htmlEl.setAttribute('data-no-touch', true);
     const f = await fetch(url);
@@ -11,9 +10,6 @@ const get = async (url) => {
     htmlEl.setAttribute('data-no-touch', false);
     return data;
 }
-
-
-
 
 const Images = {};
 
@@ -29,8 +25,7 @@ const loadImage = (src, name, artist, onOver) => {
     }
 };
 
-
-const typeTexts = `入坑作
+const typeTextsOld = `入坑作
 最喜欢
 听最多次
 最想安利
@@ -52,18 +47,62 @@ const typeTexts = `入坑作
 消磨时间就听
 工作时听
 感觉回到过去
-今天最喜欢
+今天最喜欢`;
 
-`;
+const typeTextsNew = `入坑作
+最喜欢的
+循环最多
+最推荐
+听的第一首
 
-const types = typeTexts.trim().split(/\n+/g);
+喜欢但大众不爱
+讨厌但大众喜欢
+最被低估
+被高估
+最爱听的p主
 
+最佳PV
+最佳调教
+调的最烂
+最佳伴奏
+最治愈
 
-const vocaloSongsLocalKey = 'vocalo-songs-grid';
+最冷门
+最燃
+最佳歌词
+最有趣
+最搞怪
 
+最感动
+最洗脑
+最擦边
+最喜欢的专辑
+期待哪个p的新歌
 
+近期喜欢的歌
+最喜欢的歌姬
+收藏最多的歌姬
+外表最萌的歌姬
+喜欢此歌姬的声音`;
+
+let isNewTable = true;
+let types = [];
+let vocaloSongsLocalKey = '';
 let songs = [];
 
+let col = 5;
+let row = 6;
+let contentWidth = 610;
+let contentHeight = 900;
+let width = 0;
+let height = 0;
+
+const colWidth = 122;
+const rowHeight = 150;
+const titleHeight = 40;
+const fontHeight = 24;
+const bodyMargin = 20;
+const scale = 3;
 
 const generatorDefaultSongs = () => {
     songs = new Array(types.length).fill(0);
@@ -71,122 +110,17 @@ const generatorDefaultSongs = () => {
 
 const getSongsFromLocalStorage = () => {
     if (!window.localStorage) return generatorDefaultSongs();
-
     const songsLocal = JSON.parse(localStorage.getItem(vocaloSongsLocalKey));
-    if (!songsLocal) return generatorDefaultSongs();
-
+    if (!songsLocal || songsLocal.length !== types.length) return generatorDefaultSongs();
     songs = songsLocal;
 }
 
-getSongsFromLocalStorage();
 const saveSongsToLocalStorage = () => {
     localStorage.setItem(vocaloSongsLocalKey, JSON.stringify(songs));
 };
 
-
 const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
-
-const bodyMargin = 20;
-const contentWidth = 610;
-const contentHeight = 600;
-
-
-const col = 5;
-const row = 4;
-
-const colWidth = Math.ceil(contentWidth / col);
-const rowHeight = Math.ceil(contentHeight / row);
-const titleHeight = 40;
-const fontHeight = 24;
-
-const width = contentWidth + bodyMargin * 2;
-const height = contentHeight + bodyMargin * 2 + titleHeight;
-const scale = 3;
-
-
-canvas.width = width * scale;
-canvas.height = height * scale;
-
-ctx.fillStyle = '#FFF';
-ctx.fillRect(
-    0, 0,
-    width * scale, height * scale
-);
-
-ctx.textAlign = 'left';
-ctx.font = `${9 * scale}px sans-serif`;
-ctx.fillStyle = '#AAA';
-ctx.textBaseline = 'middle';
-ctx.lineCap = 'round';
-ctx.lineJoin = 'round';
-ctx.fillText(
-    'phystack.top/vocalo-grid  歌曲信息来自 VocaDB',
-    19 * scale,
-    (height - 10) * scale
-);
-
-ctx.scale(scale, scale);
-ctx.translate(
-    bodyMargin,
-    bodyMargin + titleHeight
-);
-
-ctx.font = '16px sans-serif';
-ctx.fillStyle = '#222';
-ctx.textAlign = 'center';
-
-
-ctx.save();
-
-
-ctx.font = 'bold 24px sans-serif';
-ctx.fillText('ボカロ生涯个人表格', contentWidth / 2, -24);
-
-
-
-
-ctx.lineWidth = 2;
-ctx.strokeStyle = '#222';
-
-for (let y = 0; y <= row; y++) {
-
-    ctx.beginPath();
-    ctx.moveTo(0, y * rowHeight);
-    ctx.lineTo(contentWidth, y * rowHeight);
-    ctx.globalAlpha = 1;
-    ctx.stroke();
-
-    if (y === row) break;
-    ctx.beginPath();
-    ctx.moveTo(0, y * rowHeight + rowHeight - fontHeight);
-    ctx.lineTo(contentWidth, y * rowHeight + rowHeight - fontHeight);
-    ctx.globalAlpha = .2;
-    ctx.stroke();
-}
-ctx.globalAlpha = 1;
-for (let x = 0; x <= col; x++) {
-    ctx.beginPath();
-    ctx.moveTo(x * colWidth, 0);
-    ctx.lineTo(x * colWidth, contentHeight);
-    ctx.stroke();
-}
-ctx.restore();
-
-
-for (let y = 0; y < row; y++) {
-
-    for (let x = 0; x < col; x++) {
-        const top = y * rowHeight;
-        const left = x * colWidth;
-        const type = types[y * col + x];
-        ctx.fillText(
-            type,
-            left + colWidth / 2,
-            top + rowHeight - fontHeight / 2,
-        );
-    }
-}
 
 const APIURL = `https://vocadb.net/api/`;
 
@@ -208,36 +142,35 @@ const openSearchBox = (index) => {
     if (!/^\d+$/.test(value) && value) {
         searchInputEl.value = value;
     }
-
 }
+
 const closeSearchBox = () => {
     htmlEl.setAttribute('data-no-scroll', false);
     searchBoxEl.setAttribute('data-show', false);
     searchInputEl.value = '';
     formEl.onsubmit();
-    setCurrentSong
 };
+
 const clearCurrentSong = () => {
     songs[currentSongIdx] = 0;
     drawSongs();
     saveSongsToLocalStorage();
 }
+
 const revertSong = () => {
     clearCurrentSong();
     closeSearchBox();
 }
+
 const setInputText = () => {
     const text = searchInputEl.value.trim().replace(/,/g, '');
     setCurrentSong(text);
 }
 
-
 const setCurrentSong = (value, url, name, artist) => {
-
     songs[currentSongIdx] = { id: value, imgsrc: url, name: name, artist: artist };
     drawSongs();
     saveSongsToLocalStorage();
-
     closeSearchBox();
 }
 
@@ -257,13 +190,13 @@ const searchFromVocaDBbyKeyword = async keyword => {
     const songs = await get(url);
     resetSongList(songs);
 }
+
 const searchFromVocaDB = () => {
     const keyword = searchInputEl.value.trim();
     if (!keyword) return searchInputEl.focus();
 
     searchFromVocaDBbyKeyword(keyword);
 }
-
 
 const searchFromAPI = async keyword => {
     let url = `${APIURL}songs`;
@@ -281,24 +214,16 @@ const resetSongList = songs => {
             return `<div class="song-item" data-id="${song.id}" name="${song.defaultName}" artist="${song.artistString}"><img src="score.png"><h3>${song.defaultName}</h3><h5>${song.artistString}</h5></div>`;
     }).join('');
 }
+
 formEl.onsubmit = async e => {
     if (e) e.preventDefault();
-
     const keyword = searchInputEl.value.trim();
-
     searchFromAPI(keyword);
 }
-
-formEl.onsubmit();
-
-
-
 
 const imageWidth = colWidth - 2;
 const imageHeight = imageWidth * 3 / 4;
 const canvasRatio = imageWidth / imageHeight;
-
-ctx.font = 'bold 32px sans-serif';
 
 function getLines(ctx, text, maxWidth) {
     var words = text.split(" ");
@@ -340,7 +265,6 @@ const drawSongs = () => {
                     rowHeight - fontHeight - 2,
             )
             ctx.restore();
-    
             continue;
         }
 
@@ -354,8 +278,7 @@ const drawSongs = () => {
         )
         ctx.restore();
 
-        if (!/^\d+$/.test(id)) { // 非数字
-
+        if (!/^\d+$/.test(id)) { 
             ctx.save();
             ctx.fillStyle = '#FFF';
             ctx.fillRect(
@@ -394,10 +317,8 @@ const drawSongs = () => {
 
             ctx.drawImage(
                 el,
-
                 sx, sy,
                 sw, sh,
-
                 x * colWidth + 1,
                 y * rowHeight + 1,
                 imageWidth,
@@ -439,7 +360,6 @@ const drawSongs = () => {
     }
 }
 
-
 const outputEl = document.querySelector('.output-box');
 const outputImageEl = outputEl.querySelector('img');
 const showOutput = imgURL => {
@@ -455,8 +375,6 @@ const closeOutput = () => {
 const downloadImage = () => {
     const fileName = 'vocalo_grid.jpg';
     const mime = 'image/jpeg';
-    // document.querySelectorAll('img').forEach(image => { image.crossOrigin = 'anonymous'; image.src += ' '; })
-    // document.querySelectorAll('img').forEach(image => { image.referrerPolicy = 'strict-origin-when-cross-origin'; })
     const imgURL = canvas.toDataURL(mime, 0.8);
     const linkEl = document.createElement('a');
     linkEl.download = fileName;
@@ -465,8 +383,6 @@ const downloadImage = () => {
     document.body.appendChild(linkEl);
     linkEl.click();
     document.body.removeChild(linkEl);
-    // new Image().src = `${APIURL}grid?ids=${getBangumiIdsText()}`;
-
     showOutput(imgURL);
 }
 
@@ -488,5 +404,116 @@ canvas.onclick = e => {
     openSearchBox(index);
 }
 
+function renderBackground() {
+    width = contentWidth + bodyMargin * 2;
+    height = contentHeight + bodyMargin * 2 + titleHeight;
 
-drawSongs();
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = '#FFF';
+    ctx.fillRect(0, 0, width * scale, height * scale);
+
+    ctx.textAlign = 'left';
+    ctx.font = `${9 * scale}px sans-serif`;
+    ctx.fillStyle = '#AAA';
+    ctx.textBaseline = 'middle';
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.fillText(
+        'phystack.top/vocalo-grid  歌曲信息来自 VocaDB',
+        19 * scale,
+        (height - 10) * scale
+    );
+
+    ctx.scale(scale, scale);
+    ctx.translate(bodyMargin, bodyMargin + titleHeight);
+
+    ctx.font = '16px sans-serif';
+    ctx.fillStyle = '#222';
+    ctx.textAlign = 'center';
+
+    ctx.save();
+    ctx.font = 'bold 24px sans-serif';
+    const titleText = isNewTable ? '术曲个人喜好表' : 'ボカロ生涯个人表格';
+    ctx.fillText(titleText, contentWidth / 2, -24);
+
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#222';
+
+    for (let y = 0; y <= row; y++) {
+        ctx.beginPath();
+        ctx.moveTo(0, y * rowHeight);
+        ctx.lineTo(contentWidth, y * rowHeight);
+        ctx.globalAlpha = 1;
+        ctx.stroke();
+
+        if (y === row) break;
+        ctx.beginPath();
+        ctx.moveTo(0, y * rowHeight + rowHeight - fontHeight);
+        ctx.lineTo(contentWidth, y * rowHeight + rowHeight - fontHeight);
+        ctx.globalAlpha = .2;
+        ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    for (let x = 0; x <= col; x++) {
+        ctx.beginPath();
+        ctx.moveTo(x * colWidth, 0);
+        ctx.lineTo(x * colWidth, contentHeight);
+        ctx.stroke();
+    }
+    ctx.restore();
+
+    for (let y = 0; y < row; y++) {
+        for (let x = 0; x < col; x++) {
+            const top = y * rowHeight;
+            const left = x * colWidth;
+            const type = types[y * col + x];
+            ctx.fillText(
+                type,
+                left + colWidth / 2,
+                top + rowHeight - fontHeight / 2,
+            );
+        }
+    }
+}
+
+function initTable() {
+    if (isNewTable) {
+        types = typeTextsNew.trim().split(/\n+/g);
+        vocaloSongsLocalKey = 'vocalo-songs-grid-new';
+        row = 6;
+        contentHeight = 900;
+    } else {
+        types = typeTextsOld.trim().split(/\n+/g);
+        vocaloSongsLocalKey = 'vocalo-songs-grid';
+        row = 4;
+        contentHeight = 600;
+    }
+    
+    getSongsFromLocalStorage();
+    renderBackground();
+    drawSongs();
+}
+
+const toggleBtn = document.createElement('button');
+toggleBtn.innerText = '切换新/旧表格';
+toggleBtn.style.position = 'fixed';
+toggleBtn.style.top = '10px';
+toggleBtn.style.right = '10px';
+toggleBtn.style.zIndex = '9999';
+toggleBtn.style.padding = '8px 16px';
+toggleBtn.style.background = '#333';
+toggleBtn.style.color = '#fff';
+toggleBtn.style.border = 'none';
+toggleBtn.style.borderRadius = '4px';
+toggleBtn.style.cursor = 'pointer';
+toggleBtn.onclick = () => {
+    isNewTable = !isNewTable;
+    initTable();
+};
+document.body.appendChild(toggleBtn);
+
+initTable();
+formEl.onsubmit();
